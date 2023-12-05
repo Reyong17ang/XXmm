@@ -1,0 +1,83 @@
+plugins {
+//    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+
+}
+// 组件模式和基础模式切换
+def root = rootProject.ext
+if (root.isModule) {
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
+}
+android {
+    namespace 'com.example.mod_p2p'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 26
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+//    组件化模式资源切换
+    sourceSets {
+        main {
+            if (rootProject.ext.isModule) {
+                manifest.srcFile 'src/main/AndroidManifest.xml'
+            } else {
+                manifest.srcFile 'src/main/java/com/example/mod_p2p/AndroidManifest.xml'
+                //library模式下排除debug文件夹中的所有Java文件
+                java {
+                    exclude 'debug/**'
+                }
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    buildFeatures {
+        dataBinding = true
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    //kt
+    implementation 'androidx.core:core-ktx:1.10.1'
+    // Coroutines
+    def coroutine_version = "1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutine_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutine_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx3:${coroutine_version}"
+
+    // Lifecycle
+    def lifecycle_version = "2.6.2"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:${lifecycle_version}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}"
+    //others
+    implementation "com.github.bumptech.glide:glide:4.15.1"
+    implementation 'com.guolindev.permissionx:permissionx:1.7.1'
+    implementation 'com.blankj:utilcodex:1.31.1'
+
+
+}

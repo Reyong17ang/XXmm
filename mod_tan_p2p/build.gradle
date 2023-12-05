@@ -1,0 +1,105 @@
+plugins {
+//    id 'com.android.library'
+    id 'org.jetbrains.kotlin.android'
+    id 'kotlin-kapt'
+}
+// 组件模式和基础模式切换
+def root = rootProject.ext
+if (root.isModule) {
+    apply plugin: 'com.android.application'
+} else {
+    apply plugin: 'com.android.library'
+}
+android {
+    namespace 'com.example.mod_tan_p2p'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 26
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+    packagingOptions {
+        exclude "META-INF/INDEX.LIST"
+        exclude "META-INF/io.netty.versions.properties"
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    buildFeatures {
+        dataBinding = true
+    }
+}
+
+dependencies {
+
+    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.9.0'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    //kt
+    implementation 'androidx.core:core-ktx:1.10.1'
+    // RxJava3
+    implementation "io.reactivex.rxjava3:rxjava:3.1.6"
+    implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
+    implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
+//    implementation 'com.github.tbruyelle:rxpermissions:0.12'
+    // RxBinding
+    def rxbinding_version = "4.0.0"
+    implementation "com.jakewharton.rxbinding4:rxbinding-core:${rxbinding_version}"
+    implementation "com.jakewharton.rxbinding4:rxbinding-appcompat:${rxbinding_version}"
+    implementation "com.jakewharton.rxbinding4:rxbinding-swiperefreshlayout:${rxbinding_version}"
+    // Coroutines
+    def coroutine_version = "1.7.3"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutine_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutine_version}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx3:${coroutine_version}"
+
+    // Lifecycle
+    def lifecycle_version = "2.6.2"
+    implementation "androidx.lifecycle:lifecycle-runtime-ktx:${lifecycle_version}"
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}"
+
+    // CameraX
+    def camerax_version = "1.2.3"
+    implementation "androidx.camera:camera-core:${camerax_version}"
+    implementation "androidx.camera:camera-camera2:${camerax_version}"
+    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
+    implementation "androidx.camera:camera-video:${camerax_version}"
+    implementation "androidx.camera:camera-view:${camerax_version}"
+    implementation "androidx.camera:camera-extensions:${camerax_version}"
+
+    // BarcodeScan
+    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+
+    // QRCode Gen
+    implementation 'com.github.kenglxn.QRGen:android:3.0.1'
+    // implementation 'com.github.kenglxn.QRGen:javase:3.0.1'
+
+    // Start Result
+    implementation 'com.afollestad.inline-activity-result:core:0.2.0'
+    implementation 'com.afollestad.inline-activity-result:coroutines:0.2.0'
+    //others
+    implementation "com.github.bumptech.glide:glide:4.15.1"
+    implementation 'com.guolindev.permissionx:permissionx:1.7.1'
+    implementation 'com.blankj:utilcodex:1.31.1'
+    // Start Result
+    implementation 'com.afollestad.inline-activity-result:core:0.2.0'
+    implementation 'com.afollestad.inline-activity-result:coroutines:0.2.0'
+
+    implementation project(path: ':net')
+}

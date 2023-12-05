@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:id="@+id/ll_debug"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:id="@+id/tv_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="搜索设备"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/tv_choose_file"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="选择文件"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/tv_cancel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="取消连接"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/tv_listen"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="监听文件传输"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/tv_create_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="创建组"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+
+            <TextView
+                android:id="@+id/tv_cancel_group"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="清除组"
+                android:textColor="@color/black"
+                android:textSize="30sp" />
+        </LinearLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/cl_top"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <ImageView
+                android:layout_width="match_parent"
+                android:layout_height="248dp"
+                android:background="#2ECA4F"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <ImageView
+                android:id="@+id/iv_rotate_light"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="52dp"
+                android:src="@mipmap/ic_rotate_light"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <View
+                android:layout_width="85dp"
+                android:layout_height="85dp"
+                android:background="@drawable/shape_white_circle_shade"
+                app:layout_constraintBottom_toBottomOf="@id/iv_rotate_light"
+                app:layout_constraintEnd_toEndOf="@id/iv_rotate_light"
+                app:layout_constraintStart_toStartOf="@id/iv_rotate_light"
+                app:layout_constraintTop_toTopOf="@+id/iv_rotate_light"
+                app:srcCompat="@mipmap/ic_p2p_phone" />
+
+            <ImageView
+                android:id="@+id/iv_phone"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@mipmap/ic_p2p_phone"
+                app:layout_constraintBottom_toBottomOf="@id/iv_rotate_light"
+                app:layout_constraintEnd_toEndOf="@id/iv_rotate_light"
+                app:layout_constraintStart_toStartOf="@id/iv_rotate_light"
+                app:layout_constraintTop_toTopOf="@+id/iv_rotate_light" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:gravity="center_horizontal"
+                android:text="@string/p2p_connect_desc"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                app:layout_constraintTop_toBottomOf="@+id/iv_rotate_light" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/cl_top">
+
+            <TextView
+                android:id="@+id/tv_top0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_18"
+                android:text="0"
+                android:textColor="#2ECA4F"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="@+id/tv_bottom0"
+                app:layout_constraintStart_toStartOf="@id/tv_bottom0"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_bottom0"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_4"
+                android:text="局域网设备"
+                android:textColor="#292929"
+                android:textSize="@dimen/dp_14"
+                app:layout_constraintEnd_toStartOf="@+id/tv_bottom1"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/tv_top0" />
+
+            <TextView
+                android:id="@+id/tv_top1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_18"
+                android:text="0"
+                android:textColor="#2ECA4F"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="@+id/tv_bottom1"
+                app:layout_constraintStart_toStartOf="@id/tv_bottom1"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_bottom1"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_4"
+                android:text="文件数量"
+                android:textColor="#292929"
+                android:textSize="@dimen/dp_14"
+                app:layout_constraintEnd_toStartOf="@+id/tv_bottom2"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/tv_bottom0"
+                app:layout_constraintTop_toBottomOf="@id/tv_top1" />
+
+            <TextView
+                android:id="@+id/tv_top2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_18"
+                android:text="0MB"
+                android:textColor="#2ECA4F"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                app:layout_constraintEnd_toEndOf="@+id/tv_bottom2"
+                app:layout_constraintStart_toStartOf="@id/tv_bottom2"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <TextView
+                android:id="@+id/tv_bottom2"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/dp_4"
+                android:text="节省流量"
+                android:textColor="#292929"
+                android:textSize="@dimen/dp_14"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toEndOf="@+id/tv_bottom1"
+                app:layout_constraintTop_toBottomOf="@id/tv_top2" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rv_devices"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_marginTop="10dp"
+                android:visibility="visible"
+                app:layout_constraintTop_toBottomOf="@+id/tv_bottom0"
+                app:layout_constraintBottom_toBottomOf="parent"
+                tools:listitem="@layout/item_p2p_device" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</layout>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+    </data>
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <com.seosh817.circularseekbar.CircularSeekBar
+            android:id="@+id/circular_seek_bar"
+            android:layout_width="match_parent"
+            android:layout_height="300dp"
+            app:circularSeekBar_animation="bounce"
+            app:circularSeekBar_animationDurationMillis="1000"
+            app:circularSeekBar_barStrokeCap="butt"
+            app:circularSeekBar_barWidth="8dp"
+            app:circularSeekBar_innerThumbRadius="5dp"
+            app:circularSeekBar_innerThumbStrokeWidth="3dp"
+            app:circularSeekBar_min="0"
+            app:circularSeekBar_outerThumbRadius="5dp"
+            app:circularSeekBar_outerThumbStrokeWidth="10dp"
+            app:circularSeekBar_startAngle="45"
+            app:circularSeekBar_dashWidth="1"
+            app:circularSeekBar_dashGap="2"
+            app:circularSeekBar_sweepAngle="270" />
+
+    </LinearLayout>
+</layout>
