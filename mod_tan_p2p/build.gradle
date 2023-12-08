@@ -12,7 +12,7 @@ if (root.isModule) {
 }
 android {
     namespace 'com.example.mod_tan_p2p'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdk 26
@@ -44,20 +44,17 @@ android {
 
 dependencies {
 
-    implementation 'androidx.core:core-ktx:1.9.0'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.9.0'
-    testImplementation 'junit:junit:4.13.2'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    //kt
-    implementation 'androidx.core:core-ktx:1.10.1'
+    implementation "androidx.fragment:fragment-ktx:1.6.1"
     // RxJava3
     implementation "io.reactivex.rxjava3:rxjava:3.1.6"
     implementation 'io.reactivex.rxjava3:rxandroid:3.0.2'
     implementation 'io.reactivex.rxjava3:rxkotlin:3.0.1'
-//    implementation 'com.github.tbruyelle:rxpermissions:0.12'
+    implementation 'com.github.tbruyelle:rxpermissions:0.12'
     // RxBinding
     def rxbinding_version = "4.0.0"
     implementation "com.jakewharton.rxbinding4:rxbinding-core:${rxbinding_version}"
@@ -82,7 +79,12 @@ dependencies {
     implementation "androidx.camera:camera-video:${camerax_version}"
     implementation "androidx.camera:camera-view:${camerax_version}"
     implementation "androidx.camera:camera-extensions:${camerax_version}"
-
+    // Moshi
+    def moshi_version = "1.15.0"
+    implementation "com.squareup.moshi:moshi:${moshi_version}"
+    implementation "com.squareup.moshi:moshi-kotlin:${moshi_version}"
+    implementation "com.squareup.moshi:moshi-adapters:${moshi_version}"
+    kapt "com.squareup.moshi:moshi-kotlin-codegen:${moshi_version}"
     // BarcodeScan
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
 

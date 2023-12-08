@@ -13,7 +13,7 @@ if (root.isModule) {
 }
 android {
     namespace 'com.example.mod_p2p'
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdk 26

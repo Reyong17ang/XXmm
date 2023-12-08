@@ -1,0 +1,4 @@
+package yj
+
+object FileSenderTest {
+}

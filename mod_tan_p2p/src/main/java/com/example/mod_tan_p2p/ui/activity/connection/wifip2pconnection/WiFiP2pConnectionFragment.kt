@@ -13,6 +13,8 @@ import com.example.mod_tan_p2p.base.BaseFragment
 import com.example.mod_tan_p2p.databinding.WifiP2pConnectionFragmentBinding
 import com.example.mod_tan_p2p.utils.AndroidLog
 import com.tans.tfiletransporter.transferproto.p2pconn.P2pConnection
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.await
 import java.net.InetAddress
 import java.util.Optional
 
@@ -43,21 +45,39 @@ class WiFiP2pConnectionFragment :
                         updateState { it.copy(isP2pEnabled = true) }.bindLife()
                     }
                 }
-                WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION-> {
-                    val wifiDevicesList = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST, WifiP2pDeviceList::class.java)
-                    } else {
-                        intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST)
-                    }
-                    AndroidLog.d(TAG, "WIFI p2p devices: ${wifiDevicesList?.deviceList?.joinToString { "${it.deviceName} -> ${it.deviceAddress}" }}")
+
+                WifiP2pManager.WIFI_P2P_PEERS_CHANGED_ACTION -> {
+                    val wifiDevicesList =
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            intent.getParcelableExtra(
+                                WifiP2pManager.EXTRA_P2P_DEVICE_LIST,
+                                WifiP2pDeviceList::class.java
+                            )
+                        } else {
+                            intent.getParcelableExtra(WifiP2pManager.EXTRA_P2P_DEVICE_LIST)
+                        }
+                    AndroidLog.d(
+                        TAG,
+                        "WIFI p2p devices: ${wifiDevicesList?.deviceList?.joinToString { "${it.deviceName} -> ${it.deviceAddress}" }}"
+                    )
                     updateState { oldState ->
-                        oldState.copy(peers = wifiDevicesList?.deviceList?.map { P2pPeer(it.deviceName, it.deviceAddress) } ?: emptyList())
+                        oldState.copy(peers = wifiDevicesList?.deviceList?.map {
+                            P2pPeer(
+                                it.deviceName,
+                                it.deviceAddress
+                            )
+                        } ?: emptyList())
                     }.bindLife()
                 }
-                WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION-> {
+
+                WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION -> {
                     AndroidLog.d(TAG, "Connection state change.")
+                    launch {
+//                        checkWifiConnection()
+                    }
                 }
-                WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION-> {}
+
+                WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION -> {}
             }
         }
 
@@ -72,6 +92,40 @@ class WiFiP2pConnectionFragment :
             addAction(WifiP2pManager.WIFI_P2P_THIS_DEVICE_CHANGED_ACTION)
         }
         requireActivity().registerReceiver(wifiReceiver, intentFilter)
+    }
+
+    override fun initViews(binding: WifiP2pConnectionFragmentBinding) {
+        launch {
+            launch {
+                closeCurrentWifiConnection()
+            }
+        }
+    }
+
+    private suspend fun closeCurrentWifiConnection() {
+        updateState { oldState ->
+            oldState.copy(
+                wifiP2PConnection = Optional.empty(),
+                connectionStatus = ConnectionStatus.NoConnection
+            )
+        }.await()
+//        wifiP2pManager.cancelConnectionSuspend(wifiChannel)
+//        wifiP2pManager.removeGroupSuspend(wifiChannel)
+    }
+
+//    private suspend fun checkWifiConnection(): WifiP2pConnection? {
+//
+//    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        wifiP2pManager.cancelConnect(wifiChannel, null)
+        wifiP2pManager.removeGroup(wifiChannel, null)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requireActivity().unregisterReceiver(wifiReceiver)
     }
 
     companion object {

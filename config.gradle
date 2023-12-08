@@ -11,7 +11,7 @@ ext {
     android = [
             applicationId    : "com.sum.tea",
             //使用exoPlayer编译版本需要到33，而33中有bug,xml写代码没有代码提示
-            compileSdk       : 33,
+            compileSdk       : 34,
             buildToolsVersion: '32.0.0',
             minSdk           : 21,
             targetSdk        : 32,

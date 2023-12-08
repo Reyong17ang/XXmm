@@ -16,9 +16,9 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "MainApplication"
+rootProject.name = "XXmm"
 include ':app'
-include ':lib_framework'
 include ':net'
 include ':mod_p2p'
 include ':mod_tan_p2p'
+include ':lib_net'

@@ -32,7 +32,6 @@ class DirectBroadcastReceiver(
 ) : BroadcastReceiver() {
 
     companion object {
-
         fun getIntentFilter(): IntentFilter {
             val intentFilter = IntentFilter()
             intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION)

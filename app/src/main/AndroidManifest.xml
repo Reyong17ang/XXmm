@@ -29,7 +29,7 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
     <application
-        android:name="com.example.myapplication.MainApplication"
+        android:name="com.example.App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -39,8 +39,7 @@
         android:supportsRtl="true"
         android:requestLegacyExternalStorage="true"
         android:theme="@style/Theme.Design.Light.NoActionBar"
-        tools:replace="android:name,android:label,android:icon, android:theme,android:allowBackup"
-        tools:targetApi="31">
+        tools:replace="android:name,android:label,android:icon, android:theme,android:allowBackup">
         <activity
             android:name="com.example.myapplication.MainActivity"
             android:exported="true"
@@ -51,9 +50,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.example.transfer.ui.TransferActivity"
-            android:screenOrientation="portrait"/>
-
     </application>
 
 </manifest>

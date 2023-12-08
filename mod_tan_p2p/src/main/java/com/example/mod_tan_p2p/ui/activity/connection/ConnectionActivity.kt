@@ -4,13 +4,18 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
 import android.provider.Settings
 import com.example.mod_tan_p2p.R
 import com.example.mod_tan_p2p.base.BaseActivity
 import com.example.mod_tan_p2p.databinding.ConnectionActivityBinding
+import com.example.mod_tan_p2p.ui.activity.commomdialog.showOptionalDialog
 import com.example.mod_tan_p2p.utils.showToastShort
 import com.permissionx.guolindev.PermissionX
+import com.tbruyelle.rxpermissions3.RxPermissions
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.rx3.await
+import kotlin.jvm.optionals.getOrNull
 
 class ConnectionActivity :
     BaseActivity<ConnectionActivityBinding, Unit>(R.layout.connection_activity, Unit) {
@@ -36,17 +41,21 @@ class ConnectionActivity :
                 permissionNeed.add(Manifest.permission.ACCESS_FINE_LOCATION)
                 permissionNeed.add(Manifest.permission.ACCESS_COARSE_LOCATION)
             }
-            PermissionX.init(this@ConnectionActivity).permissions(permissionNeed)
-                .request { allGranted, grantedList, deniedList ->
-                    if (allGranted) {
-                        showToastShort("All permissions are granted")
-                        val i = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
-                        i.data = Uri.fromParts("package", packageName, null)
-                        startActivity(i)
-                    } else {
-                        showToastShort("These permissions are denied: $deniedList")
-                    }
+            RxPermissions(this@ConnectionActivity)
+                .request(*permissionNeed.toTypedArray())
+                .firstOrError()
+                .await()
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R && !Environment.isExternalStorageManager()) {
+                val grant = this@ConnectionActivity.showOptionalDialog(
+                    title = getString(R.string.permission_request_title),
+                    message = getString(R.string.permission_storage_request_content)
+                ).await().getOrNull() ?: false
+                if (grant) {
+                    val i = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
+                    i.data = Uri.fromParts("package", packageName, null)
+                    startActivity(i)
                 }
+            }
         }
     }
 }

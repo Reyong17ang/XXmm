@@ -12,7 +12,7 @@
           <set>
             <option value="$PROJECT_DIR$" />
             <option value="$PROJECT_DIR$/app" />
-            <option value="$PROJECT_DIR$/lib_framework" />
+            <option value="$PROJECT_DIR$/lib_net" />
             <option value="$PROJECT_DIR$/mod_p2p" />
             <option value="$PROJECT_DIR$/mod_tan_p2p" />
             <option value="$PROJECT_DIR$/net" />
