@@ -1,6 +1,6 @@
 package com.example.lib_net.transferproto.filetransfer
 
-import com.example.lib_net.ILog
+import com.example.lib_net.*
 import com.example.lib_net.netty.INettyConnectionTask
 import com.example.lib_net.netty.NettyConnectionObserver
 import com.example.lib_net.netty.NettyTaskState
@@ -14,9 +14,6 @@ import com.example.lib_net.netty.extensions.simplifyServer
 import com.example.lib_net.netty.extensions.withClient
 import com.example.lib_net.netty.extensions.withServer
 import com.example.lib_net.netty.tcp.NettyTcpServerConnectionTask
-import com.example.lib_net.readContent
-import com.example.lib_net.resumeExceptionIfActive
-import com.example.lib_net.resumeIfActive
 import com.example.lib_net.transferproto.SimpleObservable
 import com.example.lib_net.transferproto.SimpleStateable
 import com.example.lib_net.transferproto.TransferProtoConstant
@@ -24,13 +21,7 @@ import com.example.lib_net.transferproto.filetransfer.model.DownloadReq
 import com.example.lib_net.transferproto.filetransfer.model.ErrorReq
 import com.example.lib_net.transferproto.filetransfer.model.FileTransferDataType
 import com.example.lib_net.transferproto.filetransfer.model.SenderFile
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import java.io.RandomAccessFile
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -49,6 +40,7 @@ class FileSender(
     private val anchorBufferDurationInMillis: Long = 200L,
     private val log: ILog
 ) : SimpleObservable<FileTransferObserver>, SimpleStateable<FileTransferState> {
+
     override val observers: LinkedBlockingDeque<FileTransferObserver> = LinkedBlockingDeque()
 
     override val state: AtomicReference<FileTransferState> =
@@ -57,11 +49,13 @@ class FileSender(
     private val serverTask: AtomicReference<NettyTcpServerConnectionTask?> by lazy {
         AtomicReference(null)
     }
+
     private val waitingSenders: LinkedBlockingDeque<SingleFileSender> = LinkedBlockingDeque()
     private val workingSender: AtomicReference<SingleFileSender?> by lazy {
         AtomicReference(null)
     }
     private val finishedSenders: LinkedBlockingDeque<SingleFileSender> = LinkedBlockingDeque()
+
     private val unhandledFragmentSenderRequest: LinkedBlockingDeque<UnhandledFragmentRequest> =
         LinkedBlockingDeque()
 
@@ -102,15 +96,8 @@ class FileSender(
             )
             this.serverTask.set(serverTask)
             serverTask.addObserver(object : NettyConnectionObserver {
-                override fun onNewMessage(
-                    localAddress: InetSocketAddress?,
-                    remoteAddress: InetSocketAddress?,
-                    msg: PackageData,
-                    task: INettyConnectionTask
-                ) {
-                }
-
                 override fun onNewState(nettyState: NettyTaskState, task: INettyConnectionTask) {
+
                     if (nettyState is NettyTaskState.Error
                         || nettyState is NettyTaskState.ConnectionClosed
                     ) {
@@ -125,8 +112,17 @@ class FileSender(
                         }
                     }
                 }
+
+                override fun onNewMessage(
+                    localAddress: InetSocketAddress?,
+                    remoteAddress: InetSocketAddress?,
+                    msg: PackageData,
+                    task: INettyConnectionTask
+                ) {
+                }
             })
             serverTask.startTask()
+
         }
     }
 
@@ -156,7 +152,28 @@ class FileSender(
     }
 
     private fun doNextSender(finishedSender: SingleFileSender?) {
-
+        synchronized(this) {
+            assertActive {
+                if (finishedSender != null) {
+                    finishedSenders.add(finishedSender)
+                    for (o in observers) {
+                        o.onEndFile(finishedSender.file.exploreFile)
+                    }
+                }
+                workingSender.set(null)
+                val targetSender = waitingSenders.pollFirst()
+                if (targetSender != null) {
+                    targetSender.onActive()
+                    workingSender.set(targetSender)
+                    for (o in observers) {
+                        o.onStartFile(targetSender.file.exploreFile)
+                    }
+                } else {
+                    newState(FileTransferState.Finished)
+                    closeConnectionIfActive()
+                }
+            }
+        }
     }
 
     private fun errorStateIfActive(errorMsg: String) {
@@ -200,6 +217,7 @@ class FileSender(
     }
 
     private inner class SingleFileSender(val file: SenderFile) {
+
         private val randomAccessFile: AtomicReference<RandomAccessFile?> by lazy {
             AtomicReference(
                 null
@@ -227,15 +245,21 @@ class FileSender(
         }
 
         fun onActive() {
-            try {
-                randomAccessFile.get()?.close()
-                val randomAccessFile = RandomAccessFile(file.realFile, "r")
-                this.randomAccessFile.set(randomAccessFile)
-                checkUnhandledFragment()
-            } catch (e: Throwable) {
-                val msg = "Read file: $file error: ${e.message}"
-                log.d(TAG, msg)
-                errorStateIfActive(msg)
+            if (!isSingleFileSenderCanceled.get() && !isSingleFileSenderFinished.get() && isSingleFileSenderExecuted.compareAndSet(
+                    false,
+                    true
+                )
+            ) {
+                try {
+                    randomAccessFile.get()?.close()
+                    val randomAccessFile = RandomAccessFile(file.realFile, "r")
+                    this.randomAccessFile.set(randomAccessFile)
+                    checkUnhandledFragment()
+                } catch (e: Throwable) {
+                    val msg = "Read file: $file error: ${e.message}"
+                    log.d(TAG, msg)
+                    errorStateIfActive(msg)
+                }
             }
         }
 
@@ -364,6 +388,7 @@ class FileSender(
         }
 
         private inner class SingleFileFragmentSender : CoroutineScope {
+
             override val coroutineContext: CoroutineContext = Dispatchers.IO + Job()
 
             private val serverClientTask: AtomicReference<ConnectionServerClientImpl?> by lazy {
@@ -379,16 +404,9 @@ class FileSender(
             private val isFragmentFinished: AtomicBoolean by lazy {
                 AtomicBoolean(false)
             }
+
             private val closeObserver: NettyConnectionObserver by lazy {
                 object : NettyConnectionObserver {
-                    override fun onNewMessage(
-                        localAddress: InetSocketAddress?,
-                        remoteAddress: InetSocketAddress?,
-                        msg: PackageData,
-                        task: INettyConnectionTask
-                    ) {
-                    }
-
                     override fun onNewState(
                         nettyState: NettyTaskState,
                         task: INettyConnectionTask
@@ -400,11 +418,20 @@ class FileSender(
                         }
                     }
 
+                    override fun onNewMessage(
+                        localAddress: InetSocketAddress?,
+                        remoteAddress: InetSocketAddress?,
+                        msg: PackageData,
+                        task: INettyConnectionTask
+                    ) {
+                    }
                 }
             }
+
             private val downloadReq: AtomicReference<DownloadReq?> by lazy {
                 AtomicReference(null)
             }
+
             private val downloadReqServer: IServer<DownloadReq, Unit> by lazy {
                 simplifyServer(
                     requestType = FileTransferDataType.DownloadReq.type,
@@ -438,6 +465,7 @@ class FileSender(
                     }
                 )
             }
+
             private val errorReqServer: IServer<ErrorReq, Unit> by lazy {
                 simplifyServer(
                     requestType = FileTransferDataType.ErrorReq.type,
@@ -451,6 +479,7 @@ class FileSender(
                     }
                 )
             }
+
             private val finishReqServer: IServer<Unit, Unit> by lazy {
                 simplifyServer(
                     requestType = FileTransferDataType.FinishedReq.type,
@@ -549,7 +578,6 @@ class FileSender(
                             override fun onFail(errorMsg: String) {
                                 cont.resumeExceptionIfActive(Throwable(errorMsg))
                             }
-
                         }
                     ) ?: cont.resumeExceptionIfActive(Throwable("Task is null."))
                 }
@@ -602,6 +630,7 @@ class FileSender(
                 this.bufferSize.set(newBufferSize)
             }
         }
+
     }
 
     private class UnhandledFragmentRequest(

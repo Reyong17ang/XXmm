@@ -25,13 +25,7 @@ import com.example.lib_net.transferproto.filetransfer.model.DownloadReq
 import com.example.lib_net.transferproto.filetransfer.model.ErrorReq
 import com.example.lib_net.transferproto.filetransfer.model.FileTransferDataType
 import com.example.lib_net.writeContent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.asExecutor
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
 import java.io.File
 import java.io.RandomAccessFile
 import java.net.InetAddress
@@ -54,10 +48,12 @@ class FileDownloader(
 
     override val state: AtomicReference<FileTransferState> =
         AtomicReference(FileTransferState.NotExecute)
+
     private val waitingDownloader: LinkedBlockingDeque<SingleFileDownloader> = LinkedBlockingDeque()
     private val workingDownloader: AtomicReference<SingleFileDownloader?> = AtomicReference(null)
     private val finishedDownloader: LinkedBlockingDeque<SingleFileDownloader> =
         LinkedBlockingDeque()
+
 
     override fun addObserver(o: FileTransferObserver) {
         super.addObserver(o)
@@ -161,6 +157,7 @@ class FileDownloader(
 
     private inner class SingleFileDownloader(val file: FileExploreFile) :
         CoroutineScope by CoroutineScope(Dispatchers.IO) {
+
         private val singleFileHasDownloadSize: AtomicLong by lazy {
             AtomicLong(0L)
         }
@@ -192,7 +189,8 @@ class FileDownloader(
 
         fun onActive(lastSingleFileDownloader: SingleFileDownloader?) {
             if (!isSingleFileDownloaderCanceled.get() && !isSingleFileFinished.get() && isSingleFileDownloaderExecuted.compareAndSet(
-                    false, true
+                    false,
+                    true
                 )
             ) {
                 try {
@@ -210,7 +208,9 @@ class FileDownloader(
                             var result: Result<SingleFileFragmentDownloader>
                             do {
                                 val fd = SingleFileFragmentDownloader(
-                                    randomAccessFile = randomAccessFile, start = start, end = end
+                                    randomAccessFile = randomAccessFile,
+                                    start = start,
+                                    end = end
                                 )
                                 result = runCatching {
                                     fd.connectToServerSuspend()
@@ -235,7 +235,10 @@ class FileDownloader(
                         lastSingleFileDownloader?.closeFragmentsConnection()
                     }
                 } catch (e: Throwable) {
-
+                    val msg = "Create download task fail: ${e.message}"
+                    log.e(TAG, msg, e)
+                    lastSingleFileDownloader?.closeFragmentsConnection()
+                    errorStateIfActive(msg)
                 }
             }
         }
@@ -281,7 +284,8 @@ class FileDownloader(
 
         private fun onFinished() {
             if (isSingleFileDownloaderExecuted.get() && !isSingleFileDownloaderCanceled.get() && isSingleFileFinished.compareAndSet(
-                    false, true
+                    false,
+                    true
                 )
             ) {
                 try {
@@ -379,14 +383,12 @@ class FileDownloader(
                     val suffix = values.getOrNull(4) ?: ""
                     getDownloadedFile("$name-${index.toLong() + 1}$suffix")
                 }
-
                 nameSuffix.matches(fileName) -> {
                     val values = nameSuffix.find(fileName)?.groupValues ?: emptyList()
                     val name = values.getOrNull(1) ?: ""
                     val suffix = values.getOrNull(3) ?: ""
                     getDownloadedFile("$name-1$suffix")
                 }
-
                 nameIndex.matches(fileName) -> {
                     val values = nameIndexSuffixRegex.find(fileName)?.groupValues ?: emptyList()
                     val name = values.getOrNull(1) ?: ""
@@ -418,6 +420,7 @@ class FileDownloader(
             private val start: Long,
             private val end: Long
         ) {
+
             private val size: Long = end - start
 
             private val task: AtomicReference<ConnectionServerClientImpl?> by lazy {
@@ -433,7 +436,8 @@ class FileDownloader(
             }
 
             private val errorReqServer: IServer<ErrorReq, Unit> by lazy {
-                simplifyServer(requestType = FileTransferDataType.ErrorReq.type,
+                simplifyServer(
+                    requestType = FileTransferDataType.ErrorReq.type,
                     responseType = FileTransferDataType.ErrorResp.type,
                     log = log,
                     onRequest = { _, _, r, isNew ->
@@ -441,13 +445,15 @@ class FileDownloader(
                         if (isNew) {
                             remoteErrorStateIfActive(r.errorMsg)
                         }
-                    })
+                    }
+                )
             }
 
             private val downloadedSize = AtomicLong(0)
 
             private val receiveDataServer: IServer<ByteArray, Unit> by lazy {
-                simplifyServer(requestType = FileTransferDataType.SendReq.type,
+                simplifyServer(
+                    requestType = FileTransferDataType.SendReq.type,
                     responseType = FileTransferDataType.SendResp.type,
                     log = log,
                     onRequest = { _, _, data, isNew ->
@@ -470,7 +476,8 @@ class FileDownloader(
                                         isFragmentDownloaderFinished.set(true)
                                         val t = task.get()
                                         if (t != null) {
-                                            t.requestSimplify(type = FileTransferDataType.FinishedReq.type,
+                                            t.requestSimplify(
+                                                type = FileTransferDataType.FinishedReq.type,
                                                 request = Unit,
                                                 retryTimes = 0,
                                                 retryTimeout = 2500,
@@ -497,7 +504,8 @@ class FileDownloader(
                                                         // closeConnectionIfActive()
                                                     }
 
-                                                })
+                                                }
+                                            )
                                         } else {
                                             updateProgress(data.size.toLong())
                                             errorStateIfActive("Task is null")
@@ -512,14 +520,19 @@ class FileDownloader(
                                 }
                             }
                         }
-                    })
+                    }
+                )
             }
+
             private val closeObserver: NettyConnectionObserver by lazy {
                 object : NettyConnectionObserver {
                     override fun onNewState(
-                        nettyState: NettyTaskState, task: INettyConnectionTask
+                        nettyState: NettyTaskState,
+                        task: INettyConnectionTask
                     ) {
-                        if (nettyState is NettyTaskState.ConnectionClosed || nettyState is NettyTaskState.Error) {
+                        if (nettyState is NettyTaskState.ConnectionClosed ||
+                            nettyState is NettyTaskState.Error
+                        ) {
                             if (!isFragmentDownloaderClosed.get() && !isFragmentDownloaderFinished.get()) {
                                 val msg = "Fragment downloader is closed: $nettyState"
                                 log.e(TAG, msg)
@@ -548,7 +561,8 @@ class FileDownloader(
                 task.addObserver(object : NettyConnectionObserver {
                     @Suppress("PARAMETER_NAME_CHANGED_ON_OVERRIDE")
                     override fun onNewState(
-                        nettyState: NettyTaskState, localTask: INettyConnectionTask
+                        nettyState: NettyTaskState,
+                        localTask: INettyConnectionTask
                     ) {
                         if (nettyState is NettyTaskState.ConnectionActive) {
                             simpleCallback.onSuccess(Unit)
@@ -558,7 +572,9 @@ class FileDownloader(
                             task.registerServer(receiveDataServer)
                             sendDownloadRequest(task)
                         }
-                        if (nettyState is NettyTaskState.ConnectionClosed || nettyState is NettyTaskState.Error) {
+                        if (nettyState is NettyTaskState.ConnectionClosed
+                            || nettyState is NettyTaskState.Error
+                        ) {
                             simpleCallback.onError("Connect error: $nettyState")
                             task.removeObserver(this)
                         }
@@ -581,7 +597,8 @@ class FileDownloader(
 
             fun sendRemoteError(errorMsg: String) {
                 if (isActive()) {
-                    task.get()?.requestSimplify(type = FileTransferDataType.ErrorReq.type,
+                    task.get()?.requestSimplify(
+                        type = FileTransferDataType.ErrorReq.type,
                         request = ErrorReq(errorMsg),
                         retryTimes = 0,
                         callback = object : IClientManager.RequestCallback<Unit> {
@@ -598,7 +615,8 @@ class FileDownloader(
                             override fun onFail(errorMsg: String) {
                                 log.e(TAG, "Send error msg error: $errorMsg")
                             }
-                        })
+                        }
+                    )
                 }
             }
 
@@ -614,9 +632,12 @@ class FileDownloader(
             }
 
             private fun sendDownloadRequest(task: ConnectionServerClientImpl) {
-                task.requestSimplify(type = FileTransferDataType.DownloadReq.type,
+                task.requestSimplify(
+                    type = FileTransferDataType.DownloadReq.type,
                     request = DownloadReq(
-                        file = file, start = start, end = end
+                        file = file,
+                        start = start,
+                        end = end
                     ),
                     callback = object : IClientManager.RequestCallback<Unit> {
                         override fun onSuccess(
@@ -634,9 +655,12 @@ class FileDownloader(
                             errorStateIfActive(msg)
                         }
 
-                    })
+                    }
+                )
             }
+
         }
+
     }
 
     companion object {
