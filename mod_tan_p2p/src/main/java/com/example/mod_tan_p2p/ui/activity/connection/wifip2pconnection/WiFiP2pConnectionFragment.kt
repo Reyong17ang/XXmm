@@ -8,15 +8,24 @@ import android.net.wifi.p2p.WifiP2pDeviceList
 import android.net.wifi.p2p.WifiP2pManager
 import android.os.Build
 import android.os.Bundle
+import android.view.View
 import com.example.mod_tan_p2p.R
 import com.example.mod_tan_p2p.base.BaseFragment
 import com.example.mod_tan_p2p.databinding.WifiP2pConnectionFragmentBinding
 import com.example.mod_tan_p2p.utils.AndroidLog
+import com.jakewharton.rxbinding4.view.clicks
+import com.tans.rxutils.ignoreSeveralClicks
 import com.tans.tfiletransporter.transferproto.p2pconn.P2pConnection
+import com.tans.tfiletransporter.transferproto.p2pconn.transferFileSuspend
+import io.reactivex.rxjava3.kotlin.withLatestFrom
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.rx3.await
+import kotlinx.coroutines.rx3.rxSingle
 import java.net.InetAddress
 import java.util.Optional
+import kotlin.jvm.optionals.getOrNull
 
 class WiFiP2pConnectionFragment :
     BaseFragment<WifiP2pConnectionFragmentBinding, WiFiP2pConnectionFragment.Companion.WifiP2pConnectionState>(
@@ -99,6 +108,100 @@ class WiFiP2pConnectionFragment :
             launch {
                 closeCurrentWifiConnection()
             }
+            render({ it.p2pHandshake to it.connectionStatus }) { (handShake, status) ->
+                if (handShake.isPresent) {
+                    binding.localAddressTv.text = getString(
+                        R.string.wifi_p2p_connection_local_address,
+                        handShake.get().localAddress.toString().removePrefix("/")
+                    )
+                } else {
+                    binding.localAddressTv.text =
+                        getString(R.string.wifi_p2p_connection_local_address, "Not Available")
+                    binding.remoteConnectedDeviceTv.text = getString(
+                        R.string.wifi_p2p_connection_remote_device,
+                        "Not Available", "Not Available", status.toString()
+                    )
+                }
+            }.bindLife()
+
+            render({ it.wifiP2PConnection to it.p2pHandshake }) { (wifiP2pConnection, handshake) ->
+                if (wifiP2pConnection.isPresent) {
+                    binding.connectedActionsLayout.visibility = View.VISIBLE
+                    binding.remoteDevicesRv.visibility = View.GONE
+                    if (handshake.isPresent) {
+                        binding.transferFileLayout.visibility = View.VISIBLE
+                    } else {
+                        binding.transferFileLayout.visibility = View.INVISIBLE
+                    }
+                } else {
+                    binding.connectedActionsLayout.visibility = View.GONE
+                    binding.remoteDevicesRv.visibility = View.VISIBLE
+                }
+            }.bindLife()
+
+            launch(Dispatchers.IO) {
+                while (true) {
+                    val (isP2pEnabled, connection) = bindState().map { it.isP2pEnabled to it.wifiP2PConnection.getOrNull() }
+                        .firstOrError().await()
+                    if (isResumed && isVisible) {
+                        if (!isP2pEnabled) {
+                            updateState { oldState -> oldState.copy(peers = emptyList()) }.await()
+                        } else {
+                            if (connection == null) {
+                                val state = wifiP2pManager.discoverPeersSuspend(wifiChannel)
+                                if (state == WifiActionResult.Success) {
+                                    AndroidLog.d(TAG, "Request discover peer success")
+                                    val peers =
+                                        wifiP2pManager.requestPeersSuspend(channel = wifiChannel)
+                                    AndroidLog.d(
+                                        TAG,
+                                        "WIFI p2p devices: ${peers.orElseGet { null }?.deviceList?.joinToString { "${it.deviceName} -> ${it.deviceAddress}" }}"
+                                    )
+                                    updateState { oldState ->
+                                        oldState.copy(peers = peers.getOrNull()?.deviceList?.map {
+                                            P2pPeer(
+                                                it.deviceName,
+                                                it.deviceAddress
+                                            )
+                                        } ?: emptyList())
+                                    }.await()
+                                } else {
+                                    updateState { oldState -> oldState.copy(peers = emptyList()) }.await()
+                                    AndroidLog.e(TAG, "Request discover peer fail: $state")
+                                }
+                            } else {
+                                updateState { oldState -> oldState.copy(peers = emptyList()) }.await()
+                            }
+                        }
+                    }
+                    delay(4000)
+                }
+            }
+
+            binding.transferFileLayout.clicks()
+                .ignoreSeveralClicks(duration = 1000)
+                .withLatestFrom(bindState().map { it.p2pHandshake })
+                .switchMapSingle { (_, handshake) ->
+                    rxSingle(Dispatchers.IO) {
+                        val connection = handshake.getOrNull()?.p2pConnection
+                        if (connection == null) {
+                            AndroidLog.e(TAG, "Request transfer file fail: handshake is null.")
+                        } else {
+                            val requestTransferResult = runCatching {
+                                connection.transferFileSuspend()
+                            }
+                            if (requestTransferResult.isFailure) {
+                                AndroidLog.e(
+                                    TAG,
+                                    "Request transfer file fail: ${requestTransferResult.exceptionOrNull()?.message}"
+                                )
+                            } else {
+                                AndroidLog.d(TAG, "Request transfer file success.")
+                            }
+                        }
+                    }
+                }.bindLife()
+
         }
     }
 

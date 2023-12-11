@@ -102,6 +102,7 @@ dependencies {
     // Start Result
     implementation 'com.afollestad.inline-activity-result:core:0.2.0'
     implementation 'com.afollestad.inline-activity-result:coroutines:0.2.0'
+    implementation "com.github.Tans5:RxUtils:0.3.4"
 
     implementation project(path: ':net')
 }
