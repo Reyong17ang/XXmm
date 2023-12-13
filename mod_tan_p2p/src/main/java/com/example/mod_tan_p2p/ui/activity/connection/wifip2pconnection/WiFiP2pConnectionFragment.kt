@@ -205,6 +205,11 @@ class WiFiP2pConnectionFragment :
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        binding.connectedActionsLayout.visibility = View.GONE
+    }
+
     private suspend fun closeCurrentWifiConnection() {
         updateState { oldState ->
             oldState.copy(
