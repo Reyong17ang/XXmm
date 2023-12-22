@@ -21,11 +21,11 @@
             android:text="P2p_Simple" />
 
         <Button
-            android:id="@+id/button2"
+            android:id="@+id/btn_transport"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/dp_20"
-            android:text="Button" />
+            android:text="btn_transport" />
 
 
         <Button
