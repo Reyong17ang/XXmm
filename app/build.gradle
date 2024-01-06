@@ -138,7 +138,7 @@ dependencies {
     implementation 'com.blankj:utilcodex:1.31.1'
 
     implementation project(path: ':mod_p2p')
-    implementation project(path: ':net')
+    implementation project(path: ':lib_net')
     implementation project(path: ':mod_tan_p2p')
 
 

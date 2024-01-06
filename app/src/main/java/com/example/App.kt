@@ -11,6 +11,7 @@ import org.kodein.di.DIAware
 import org.kodein.di.android.androidCoreModule
 import org.kodein.di.android.x.androidXModule
 import org.kodein.di.bind
+import org.kodein.di.instance
 import org.kodein.di.singleton
 import org.threeten.bp.OffsetDateTime
 import org.threeten.bp.format.DateTimeFormatter
@@ -20,8 +21,6 @@ class App : Application(), DIAware {
     override val di: DI by DI.lazy {
         import(androidCoreModule(this@App), allowOverride = true)
         import(androidXModule(this@App), allowOverride = true)
-
-
         bind<Moshi>() with singleton { defaultMoshi }
     }
 

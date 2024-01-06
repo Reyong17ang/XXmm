@@ -1,35 +1,35 @@
-package com.tans.tfiletransporter.transferproto.fileexplore
+package com.example.lib_net.transferproto.fileexplore
 
-import com.tans.tfiletransporter.ILog
-import com.tans.tfiletransporter.netty.INettyConnectionTask
-import com.tans.tfiletransporter.netty.NettyConnectionObserver
-import com.tans.tfiletransporter.netty.NettyTaskState
-import com.tans.tfiletransporter.netty.PackageData
-import com.tans.tfiletransporter.netty.extensions.ConnectionClientImpl
-import com.tans.tfiletransporter.netty.extensions.ConnectionServerClientImpl
-import com.tans.tfiletransporter.netty.extensions.IClientManager
-import com.tans.tfiletransporter.netty.extensions.IServer
-import com.tans.tfiletransporter.netty.extensions.requestSimplify
-import com.tans.tfiletransporter.netty.extensions.simplifyServer
-import com.tans.tfiletransporter.netty.extensions.withClient
-import com.tans.tfiletransporter.netty.extensions.withServer
-import com.tans.tfiletransporter.netty.tcp.NettyTcpClientConnectionTask
-import com.tans.tfiletransporter.netty.tcp.NettyTcpServerConnectionTask
-import com.tans.tfiletransporter.transferproto.SimpleCallback
-import com.tans.tfiletransporter.transferproto.SimpleObservable
-import com.tans.tfiletransporter.transferproto.SimpleStateable
-import com.tans.tfiletransporter.transferproto.TransferProtoConstant
-import com.tans.tfiletransporter.transferproto.fileexplore.model.DownloadFilesReq
-import com.tans.tfiletransporter.transferproto.fileexplore.model.DownloadFilesResp
-import com.tans.tfiletransporter.transferproto.fileexplore.model.FileExploreDataType
-import com.tans.tfiletransporter.transferproto.fileexplore.model.FileExploreFile
-import com.tans.tfiletransporter.transferproto.fileexplore.model.HandshakeReq
-import com.tans.tfiletransporter.transferproto.fileexplore.model.HandshakeResp
-import com.tans.tfiletransporter.transferproto.fileexplore.model.ScanDirReq
-import com.tans.tfiletransporter.transferproto.fileexplore.model.ScanDirResp
-import com.tans.tfiletransporter.transferproto.fileexplore.model.SendFilesReq
-import com.tans.tfiletransporter.transferproto.fileexplore.model.SendFilesResp
-import com.tans.tfiletransporter.transferproto.fileexplore.model.SendMsgReq
+import com.example.lib_net.ILog
+import com.example.lib_net.netty.INettyConnectionTask
+import com.example.lib_net.netty.NettyConnectionObserver
+import com.example.lib_net.netty.NettyTaskState
+import com.example.lib_net.netty.PackageData
+import com.example.lib_net.netty.extensions.ConnectionClientImpl
+import com.example.lib_net.netty.extensions.ConnectionServerClientImpl
+import com.example.lib_net.netty.extensions.IClientManager
+import com.example.lib_net.netty.extensions.IServer
+import com.example.lib_net.netty.extensions.requestSimplify
+import com.example.lib_net.netty.extensions.simplifyServer
+import com.example.lib_net.netty.extensions.withClient
+import com.example.lib_net.netty.extensions.withServer
+import com.example.lib_net.netty.tcp.NettyTcpClientConnectionTask
+import com.example.lib_net.netty.tcp.NettyTcpServerConnectionTask
+import com.example.lib_net.transferproto.SimpleCallback
+import com.example.lib_net.transferproto.SimpleObservable
+import com.example.lib_net.transferproto.SimpleStateable
+import com.example.lib_net.transferproto.TransferProtoConstant
+import com.example.lib_net.transferproto.fileexplore.model.DownloadFilesReq
+import com.example.lib_net.transferproto.fileexplore.model.DownloadFilesResp
+import com.example.lib_net.transferproto.fileexplore.model.FileExploreDataType
+import com.example.lib_net.transferproto.fileexplore.model.FileExploreFile
+import com.example.lib_net.transferproto.fileexplore.model.HandshakeReq
+import com.example.lib_net.transferproto.fileexplore.model.HandshakeResp
+import com.example.lib_net.transferproto.fileexplore.model.ScanDirReq
+import com.example.lib_net.transferproto.fileexplore.model.ScanDirResp
+import com.example.lib_net.transferproto.fileexplore.model.SendFilesReq
+import com.example.lib_net.transferproto.fileexplore.model.SendFilesResp
+import com.example.lib_net.transferproto.fileexplore.model.SendMsgReq
 import java.io.File
 import java.net.InetAddress
 import java.net.InetSocketAddress
@@ -49,7 +49,8 @@ class FileExplore(
     private val heartbeatInterval: Long = 8000,
 ) : SimpleStateable<FileExploreState>, SimpleObservable<FileExploreObserver> {
 
-    override val state: AtomicReference<FileExploreState> = AtomicReference(FileExploreState.NoConnection)
+    override val state: AtomicReference<FileExploreState> =
+        AtomicReference(FileExploreState.NoConnection)
     override val observers: LinkedBlockingDeque<FileExploreObserver> = LinkedBlockingDeque()
     private val exploreTask: AtomicReference<ConnectionServerClientImpl?> = AtomicReference(null)
     private val serverTask: AtomicReference<NettyTcpServerConnectionTask?> = AtomicReference(null)
@@ -60,7 +61,9 @@ class FileExplore(
                 remoteAddress: InetSocketAddress?,
                 msg: PackageData,
                 task: INettyConnectionTask
-            ) {}
+            ) {
+            }
+
             override fun onNewState(nettyState: NettyTaskState, task: INettyConnectionTask) {
                 if (nettyState is NettyTaskState.ConnectionClosed ||
                     nettyState is NettyTaskState.Error
@@ -168,10 +171,11 @@ class FileExplore(
             idleLimitDuration = heartbeatInterval * 3,
             newClientTaskCallback = { task ->
                 if (hasChildConnection.compareAndSet(false, true)) {
-                    val exploreTask = task.withClient<ConnectionClientImpl>(log = log).withServer<ConnectionServerClientImpl>(log = log)
+                    val exploreTask = task.withClient<ConnectionClientImpl>(log = log)
+                        .withServer<ConnectionServerClientImpl>(log = log)
                     this@FileExplore.exploreTask.get()?.stopTask()
                     this@FileExplore.exploreTask.set(exploreTask)
-                    log.d(TAG,"New connection: $exploreTask")
+                    log.d(TAG, "New connection: $exploreTask")
                     exploreTask.addObserver(object : NettyConnectionObserver {
                         override fun onNewState(
                             nettyState: NettyTaskState,
@@ -248,7 +252,8 @@ class FileExplore(
                 remoteAddress: InetSocketAddress?,
                 msg: PackageData,
                 task: INettyConnectionTask
-            ) {}
+            ) {
+            }
         })
         serverTask.startTask()
         this.serverTask.get()?.stopTask()
@@ -314,12 +319,14 @@ class FileExplore(
                     }
                 }
             }
+
             override fun onNewMessage(
                 localAddress: InetSocketAddress?,
                 remoteAddress: InetSocketAddress?,
                 msg: PackageData,
                 task: INettyConnectionTask
-            ) {}
+            ) {
+            }
 
         })
         exploreTask.startTask()
@@ -459,7 +466,7 @@ class FileExplore(
         }
     }
 
-    fun requestMsg(msg: String,  simpleCallback: SimpleCallback<Unit>) {
+    fun requestMsg(msg: String, simpleCallback: SimpleCallback<Unit>) {
         assertState(simpleCallback = simpleCallback) { task, _ ->
             task.requestSimplify(
                 type = FileExploreDataType.SendMsgReq.type,
@@ -520,7 +527,8 @@ class FileExplore(
     private fun <T> assertState(
         assertHandshake: Boolean = true,
         simpleCallback: SimpleCallback<T>?,
-        success: (connectTask: ConnectionServerClientImpl, handShake: Handshake?) -> Unit) {
+        success: (connectTask: ConnectionServerClientImpl, handShake: Handshake?) -> Unit
+    ) {
         val task = exploreTask.get()
         if (task == null) {
             simpleCallback?.onError("Connection task is null.")
@@ -549,7 +557,7 @@ class FileExplore(
     }
 
     companion object {
-        private const val TAG = "com.tans.tfiletransporter.transferproto.fileexplore.FileExplore"
+        private const val TAG = "FileExplore"
         private val taskScheduleExecutor: ScheduledExecutorService by lazy {
             Executors.newScheduledThreadPool(1) {
                 Thread(it, "FileExploreTaskThread")

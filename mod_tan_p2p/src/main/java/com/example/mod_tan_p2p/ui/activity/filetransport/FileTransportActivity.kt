@@ -2,10 +2,21 @@ package com.example.mod_tan_p2p.ui.activity.filetransport
 
 import android.content.Context
 import android.content.Intent
+import androidx.fragment.app.Fragment
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.example.mod_tan_p2p.R
+import com.example.mod_tan_p2p.Settings
 import com.example.mod_tan_p2p.base.BaseActivity
+import com.example.mod_tan_p2p.base.BaseFragment
 import com.example.mod_tan_p2p.databinding.FileTransportActivityBinding
+import com.example.mod_tan_p2p.file.scanChildren
+import com.tans.tfiletransporter.transferproto.fileexplore.FileExploreRequestHandler
 import com.tans.tfiletransporter.transferproto.fileexplore.Handshake
+import com.tans.tfiletransporter.transferproto.fileexplore.model.ScanDirReq
+import com.tans.tfiletransporter.transferproto.fileexplore.model.ScanDirResp
+import io.reactivex.rxjava3.subjects.PublishSubject
+import io.reactivex.rxjava3.subjects.Subject
+import kotlinx.coroutines.launch
 import java.net.InetAddress
 import java.util.Optional
 
@@ -15,6 +26,47 @@ class FileTransportActivity :
         R.layout.file_transport_activity,
         FileTransportActivityState()
     ) {
+    private val floatActionBtnClickEvent: Subject<Unit> by lazy {
+        PublishSubject.create<Unit?>().toSerialized()
+    }
+    private val scanDirResult: FileExploreRequestHandler<ScanDirReq, ScanDirResp> by lazy {
+        object : FileExploreRequestHandler<ScanDirReq, ScanDirResp> {
+            override fun onRequest(isNew: Boolean, request: ScanDirReq): ScanDirResp? {
+                return if (Settings.isShareMyDir().blockingGet()) {
+                    request.scanChildren(this@FileTransportActivity)
+                } else {
+                    ScanDirResp(
+                        path = request.requestPath,
+                        childrenDirs = emptyList(),
+                        childrenFiles = emptyList()
+                    )
+                }
+            }
+        }
+    }
+    private val fragments: Map<DirTabType, BaseFragment<*, *>> = mapOf(
+        //        DirTabType.MyApps to MyAppsFragment(),
+        //        DirTabType.MyImages to MyImagesFragment(),
+        //        DirTabType.MyVideos to MyVideosFragment(),
+        //        DirTabType.MyAudios to MyAudiosFragment(),
+        //        DirTabType.MyDir to MyDirFragment(),
+        //        DirTabType.RemoteDir to RemoteDirFragment(),
+        //        DirTabType.Message to MessageFragment()
+    )
+
+    override fun initViews(binding: FileTransportActivityBinding) {
+        launch {
+            val (remoteInfo, remoteAddress) = with(intent) { getRemoteInfo() to getRemoteAddress() }
+            binding.toolBar.title = remoteInfo
+            binding.toolBar.subtitle = remoteAddress.hostAddress
+            binding.viewPager.adapter = object : FragmentStateAdapter(this@FileTransportActivity) {
+                override fun getItemCount(): Int = fragments.size
+                override fun createFragment(position: Int): Fragment =
+                    fragments[DirTabType.values()[position]]!!
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "FileTransporterActivity"
         private const val LOCAL_ADDRESS_EXTRA_KEY = "local_address_extra_key"

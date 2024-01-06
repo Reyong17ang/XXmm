@@ -1,7 +1,9 @@
 plugins {
-//    id 'com.android.library'
+    id 'com.android.library'
     id 'org.jetbrains.kotlin.android'
     id 'kotlin-kapt'
+    id 'com.google.devtools.ksp'
+
 }
 // 组件模式和基础模式切换
 def root = rootProject.ext
@@ -15,7 +17,7 @@ android {
     compileSdk 34
 
     defaultConfig {
-        minSdk 26
+        minSdk 30
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -65,11 +67,15 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${coroutine_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${coroutine_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx3:${coroutine_version}"
-
+    // Kodein
+    implementation "org.kodein.di:kodein-di-generic-jvm:7.2.1"
+    implementation "org.kodein.di:kodein-di-framework-android-core:7.2.0"
+    implementation "org.kodein.di:kodein-di-framework-android-x:7.2.0"
     // Lifecycle
     def lifecycle_version = "2.6.2"
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:${lifecycle_version}"
     implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:${lifecycle_version}"
+    kapt "androidx.lifecycle:lifecycle-compiler:${lifecycle_version}"
 
     // CameraX
     def camerax_version = "1.2.3"
@@ -84,7 +90,7 @@ dependencies {
     implementation "com.squareup.moshi:moshi:${moshi_version}"
     implementation "com.squareup.moshi:moshi-kotlin:${moshi_version}"
     implementation "com.squareup.moshi:moshi-adapters:${moshi_version}"
-    kapt "com.squareup.moshi:moshi-kotlin-codegen:${moshi_version}"
+    ksp "com.squareup.moshi:moshi-kotlin-codegen:${moshi_version}"
     // BarcodeScan
     implementation 'com.google.mlkit:barcode-scanning:17.2.0'
 
@@ -106,4 +112,5 @@ dependencies {
     implementation "io.github.cymchad:BaseRecyclerViewAdapterHelper4:4.1.2"
 
     implementation project(path: ':net')
+
 }
