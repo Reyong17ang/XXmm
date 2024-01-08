@@ -1,6 +1,8 @@
 package com.example.mod_tan_p2p.base
 
 import android.os.Bundle
+import androidx.activity.OnBackPressedDispatcher
+import androidx.activity.addCallback
 import androidx.annotation.LayoutRes
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.WindowCompat
@@ -11,20 +13,29 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import com.example.mod_tan_p2p.core.BindLife
 import com.example.mod_tan_p2p.core.Stateable
-import com.example.mod_tan_p2p.utils.addCallback
 import io.reactivex.rxjava3.subjects.Subject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
+import org.kodein.di.DI
+import org.kodein.di.DIAware
+import org.kodein.di.android.di
+import org.kodein.di.android.retainedSubDI
+import org.kodein.di.bind
+import org.kodein.di.singleton
 import kotlin.coroutines.CoroutineContext
 
 abstract class BaseActivity<Binding : ViewDataBinding, State : Any>(
-    @LayoutRes layoutId: Int,
+    @LayoutRes
+    layoutId: Int,
     val defaultState: State
-) : AppCompatActivity(), CoroutineScope, Stateable<State>, BindLife by BindLife() {
-    class ActivityViewMode<State : Any>(defaultState: State) : ViewModel(), BindLife by BindLife(),
+) : AppCompatActivity(), CoroutineScope, Stateable<State>, BindLife by BindLife(), DIAware {
+
+    class ActivityViewModel<State : Any>(defaultState: State) : ViewModel(),
+        BindLife by BindLife(),
         CoroutineScope by CoroutineScope(Dispatchers.Main),
         Stateable<State> by Stateable(defaultState) {
+
         fun clearRxLife() {
             lifeCompositeDisposable.clear()
         }
@@ -36,23 +47,32 @@ abstract class BaseActivity<Binding : ViewDataBinding, State : Any>(
         }
     }
 
-    private val viewModel: ActivityViewMode<State> by lazy {
+    @Suppress("UNCHECKED_CAST")
+    private val viewModel: ActivityViewModel<State> by lazy {
         ViewModelProvider(this, object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return ActivityViewMode(defaultState) as T
+                return ActivityViewModel(defaultState) as T
             }
-        })[ActivityViewMode::class.java] as ActivityViewMode<State>
+        })[ActivityViewModel::class.java] as ActivityViewModel<State>
     }
-    override val coroutineContext: CoroutineContext by lazy {
-        viewModel.coroutineContext
-    }
+
+    override val coroutineContext: CoroutineContext by lazy { viewModel.coroutineContext }
+
     override val stateStore: Subject<State> by lazy { viewModel.stateStore }
 
     protected val binding: Binding by lazy { DataBindingUtil.setContentView(this, layoutId) }
 
+    override val di: DI by retainedSubDI(di()) {
+        bind<OnBackPressedDispatcher>() with singleton { onBackPressedDispatcher }
+        addDIInstance()
+    }
+
+    open fun DI.MainBuilder.addDIInstance() {}
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        onBackPressedDispatcher.addCallback{
+        onBackPressedDispatcher.addCallback {
             onActivityBackPressed()
         }
         viewModel.clearRxLife()
@@ -65,6 +85,7 @@ abstract class BaseActivity<Binding : ViewDataBinding, State : Any>(
         insetsController.isAppearanceLightStatusBars = true
         initViews(binding)
     }
+
     open fun firstLaunchInitData() {
 
     }
